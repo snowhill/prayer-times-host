@@ -38,3 +38,9 @@ tv-dashboard.png
 tv-five-prayers.png
 prayer-times-host.zip
 notes_append.md
+data/flags.log
+data/seen_clusters.json
+data/verify_queue.json
+data/tier2_rejected.log
+data/exact_budget.json
+tunnel.log
