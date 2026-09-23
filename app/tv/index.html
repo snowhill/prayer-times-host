@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prayer Times Display</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#020B13; --card-1:#0A2539; --card-2:#03111C;
+  --ink:#F7F5F0; --text-dim:#9BA9B5;
+  --gold:#D8A83E; --gold-lt:#F3CA68; --gold-dk:#8C6528;
+  --line: rgba(216,168,62,.4);
+  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif; --arabic:'Noto Kufi Arabic',sans-serif;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{width:100%; height:100%; overflow:hidden;}
+body{ background:var(--bg); color:var(--ink); font-family:var(--sans); position:relative; }
+body::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='130'%3E%3Cg fill='none' stroke='%23D8A83E' stroke-opacity='0.045' stroke-width='1'%3E%3Crect x='42' y='42' width='46' height='46'/%3E%3Crect x='42' y='42' width='46' height='46' transform='rotate(45 65 65)'/%3E%3C/g%3E%3C/svg%3E");
+}
+.screen{ width:100vw; height:100vh; min-width:1100px; position:relative; z-index:1; display:flex; flex-direction:column; padding:26px 30px;
+  background: radial-gradient(circle at 50% 85%, rgba(216,168,62,.08), transparent 38%),
+    linear-gradient(135deg, #061827 0%, #071c2c 55%, #04121e 100%);
+  transition: transform 1.6s ease-in-out; }
+.screen::before{ content:''; position:absolute; inset:14px; border:1.5px solid rgba(216,168,62,.45); border-radius:6px; pointer-events:none; }
+
+.header{ height:130px; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:46px;
+  padding:8px 30px 14px; border-bottom:1.5px solid rgba(216,168,62,.45); position:relative; z-index:2; }
+.logo-area{ display:flex; align-items:center; gap:20px; }
+.logo{ width:64px; height:64px; }
+.mosque-ar{ font-family:var(--arabic); font-size:27px; font-weight:800; }
+.mosque-en{ font-size:15px; font-weight:800; letter-spacing:1.5px; }
+.location{ color:var(--text-dim); font-size:13px; margin-top:2px; }
+.acc-ind{ display:flex; align-items:center; gap:6px; margin-top:5px; font-size:10.5px; color:var(--text-dim); }
+.acc-text{ font-size:10.5px; font-weight:600; color:rgba(155,169,181,0.9); }
+.acc-dot{ width:6px; height:6px; border-radius:50%; background:var(--gold); opacity:0.85; }
+.clock{ text-align:center; }
+.clock-time{ font-family:var(--sans); font-size:52px; font-weight:700; letter-spacing:1px; font-variant-numeric:tabular-nums; }
+.clock-label{ color:var(--gold-lt); font-size:12px; margin-top:4px; letter-spacing:1.5px; font-weight:700; }
+.date{ min-width:220px; padding-left:26px; border-left:2px solid var(--gold); text-align:right; }
+.date-ar{ font-family:var(--arabic); font-size:16px; font-weight:700; }
+.date-en{ font-size:13px; margin-top:3px; color:var(--text-dim); }
+/* Narrow viewport fix: 1024px real viewport needs header date column to stay inside frame */
+@media (max-width: 1100px){
+  .header{ gap:20px; padding:8px 16px 14px; }
+  .date{ width:170px; max-width:170px; padding-left:12px; overflow:hidden; }
+  .date-ar{ font-size:13px; }
+  .date-en{ font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .hijri{ font-size:11px; }
+  .logo-area{ gap:12px; }
+  .mosque-ar{ font-size:22px; }
+  .mosque-en{ font-size:13px; letter-spacing:1px; }
+  .location{ font-size:11px; }
+}
+
+.hijri{ margin-top:6px; padding-top:6px; border-top:1px solid var(--line); color:var(--gold-lt);
+  font-family:var(--arabic); font-size:13px; font-weight:700; }
+
+.main{ flex:1; min-height:0; display:grid; grid-template-columns:1.6fr .9fr; gap:26px; padding:24px 16px 0; }
+
+.next-prayer{ position:relative; overflow:hidden; border:1px solid rgba(216,168,62,.5); border-radius:60px 60px 22px 22px;
+  background: linear-gradient(to bottom, var(--card-1), var(--card-2)); display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-start; padding-top:36px;
+  box-shadow: 0 0 60px rgba(216,168,62,.08), 0 20px 44px rgba(0,0,0,.4); }
+.next-prayer::before{ content:''; position:absolute; left:8%; right:8%; bottom:-60px; height:60%; border-radius:50% 50% 0 0;
+  background: radial-gradient(ellipse at center bottom, rgba(216,168,62,.22), transparent 68%); pointer-events:none; }
+.next-title-ar{ font-family:var(--arabic); font-size:26px; font-weight:800; color:var(--gold-lt); position:relative; z-index:2;}
+.next-title-en{ font-size:13px; font-weight:700; letter-spacing:4px; color:var(--gold-lt); margin-top:2px; position:relative; z-index:2;}
+.next-prayer-name{ margin-top:26px; display:flex; align-items:center; gap:28px; position:relative; z-index:2; }
+.next-ar{ font-family:var(--arabic); font-size:58px; font-weight:800; }
+.n-divider{ height:60px; width:2px; background:var(--gold); }
+.next-en{ font-size:48px; font-weight:800; }
+.countdown{ margin-top:10px; font-family:var(--sans); font-weight:700; letter-spacing:-1px; font-variant-numeric:tabular-nums;
+  line-height:1; color:var(--gold-lt); text-shadow: 0 4px 30px rgba(216,168,62,.35); position:relative; z-index:2;
+  font-size:clamp(58px, 7.8vw, 148px); margin-bottom:14px; }   /* 7.8vw (was 9vw): gives back clearance at tight sizes; TV cap 148px untouched */
+.mosque-wrap{ margin-top:auto; width:100%; display:flex; justify-content:center; padding-bottom:0; position:relative; z-index:1; }
+.mosque-svg{ width:74%; height:auto; }
+
+.prayer-panel{ border:1px solid rgba(216,168,62,.35); border-radius:24px; overflow:hidden; background: rgba(4,18,30,.7);
+  display:flex; flex-direction:column; box-shadow: 0 0 50px rgba(216,168,62,.06), 0 20px 44px rgba(0,0,0,.4); }
+.prow{ flex:1; min-height:46px; display:grid; grid-template-columns:1fr 1px 1.3fr; align-items:center; padding:0 32px;
+  border-bottom:1px solid rgba(216,168,62,.25); position:relative; }
+.prow:last-child{ border-bottom:none; }
+.prow.active{ background:linear-gradient(90deg, #B9872E, #E2B64E); }
+.prow.active .ptime, .prow.active .pname-en{ color:#071624; }
+.prow.active .pname-ar{ color:#071624; }
+.prow.active .pdivider{ background:rgba(7,22,36,0.4); }
+.ptime{ font-family:var(--sans); font-size:42px; font-weight:700; font-variant-numeric:tabular-nums; }
+.pdivider{ width:1px; height:42px; background:var(--line); }
+.pname{ text-align:right; }
+.pname-ar{ font-family:var(--arabic); font-size:28px; font-weight:800; }
+.pname-en{ font-size:11px; font-weight:700; letter-spacing:2px; color:var(--text-dim); }
+.next-badge{ position:absolute; right:24px; top:10px; font-size:9px; letter-spacing:1.5px; font-weight:800; color:rgba(7,22,36,0.7); }
+
+.footer{ height:78px; display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center;
+  border-top:1.5px solid rgba(216,168,62,.45); padding:0 36px; position:relative; z-index:2; }
+.footer-item{ display:flex; align-items:center; justify-content:center; gap:16px; }
+.footer-label-ar{ font-family:var(--arabic); font-size:17px; font-weight:700; }
+.footer-label-en{ color:var(--gold-lt); font-size:10px; letter-spacing:2px; margin-top:2px; font-weight:700; }
+.footer-value{ font-family:var(--sans); font-size:27px; font-weight:700; font-variant-numeric:tabular-nums; }
+.footer-quote{ text-align:center; color:var(--text-dim); font-size:12px; font-style:italic; }
+.footer-quote-ar{ font-family:var(--arabic); color:var(--ink); font-size:14px; margin-bottom:2px; font-weight:700; }
+
+/* Setup screen (first run — no saved location) */
+.setup{ position:fixed; inset:0; background:var(--bg); z-index:10; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:22px; }
+.setup h1{ font-size:28px; font-weight:800; color:var(--gold-lt); }
+.setup input{ font-family:var(--sans); font-size:20px; padding:14px 20px; border-radius:12px; border:1px solid var(--line);
+  background:var(--card-1); color:var(--ink); width:420px; }
+.setup button{ font-family:var(--sans); font-size:18px; font-weight:700; padding:14px 32px; border-radius:12px; border:none;
+  background:var(--gold); color:#071624; cursor:pointer; }
+.setup .results{ width:420px; max-height:220px; overflow-y:auto; }
+.setup .result-item{ padding:10px 14px; border-radius:8px; cursor:pointer; color:var(--text-dim); }
+.setup .result-item:hover{ background:var(--card-1); color:var(--ink); }
+.hidden{ display:none !important; }
+.gear{ position:fixed; right:10px; top:10px; z-index:40; width:30px; height:30px; border-radius:50%;
+  background:none; border:none; color:rgba(216,168,62,.5); font-size:15px; cursor:pointer; opacity:.4; }
+.gear:hover{ opacity:.95; }
+</style>
+</head>
+<body>
+
+<div class="setup" id="setupScreen">
+  <h1>Set up this display</h1>
+  <input type="text" id="mosqueNameInput" placeholder="Mosque / location name (optional)">
+  <input type="text" id="citySearchInput" placeholder="Search for a city...">
+  <div class="results" id="cityResults"></div>
+  <button id="setupSaveBtn">Save and continue</button>
+</div>
+
+<div class="screen hidden" id="mainScreen">
+  <header class="header">
+    <div class="logo-area">
+      <svg class="logo" viewBox="0 0 40 40" fill="none"><path d="M20 4 L14 12 L14 18 L26 18 L26 12 Z" fill="#D8A83E"/><rect x="9" y="18" width="22" height="18" rx="1" fill="#D8A83E"/><circle cx="20" cy="27" r="4" fill="#FFFFFF"/><circle cx="20" cy="9" r="1.8" fill="#D8A83E"/></svg>
+      <div>
+        <div class="mosque-ar" id="mosqueNameAr"></div>
+        <div class="mosque-en" id="mosqueNameEn"></div>
+        <div class="location" id="locationLabel"></div>
+        <div class="acc-ind" id="accInd"><span class="acc-dot"></span><span class="acc-text" id="accText">checking</span></div>
+      </div>
+    </div>
+    <div class="clock">
+      <div id="clock" class="clock-time">--:--:--</div>
+      <div class="clock-label">LOCAL TIME</div>
+    </div>
+    <div class="date">
+      <div id="dateAr" class="date-ar"></div>
+      <div id="dateEn" class="date-en"></div>
+      <div id="hijriDate" class="hijri"></div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="next-prayer">
+      <div class="next-title-ar">الصلاة القادمة</div>
+      <div class="next-title-en">NEXT PRAYER</div>
+      <div class="next-prayer-name">
+        <div id="nextArabic" class="next-ar">—</div>
+        <div class="n-divider"></div>
+        <div id="nextEnglish" class="next-en">—</div>
+      </div>
+      <div id="countdown" class="countdown">--:--:--</div>
+      <div class="mosque-wrap">
+        <svg class="mosque-svg" viewBox="0 0 600 170" fill="none">
+          <rect x="0" y="140" width="600" height="30" fill="#D8A83E" opacity="0.22"/>
+          <rect x="230" y="70" width="140" height="100" fill="#D8A83E" opacity="0.3"/>
+          <path d="M230,70 Q300,25 370,70" fill="#D8A83E" opacity="0.3"/>
+          <path d="M285,140 L285,105 Q300,90 315,105 L315,140 Z" fill="#020a10" opacity="0.55"/>
+          <circle cx="300" cy="30" r="7" fill="#D8A83E" opacity="0.45"/>
+          <path d="M293,30 L300,18 L307,30 Z" fill="#D8A83E" opacity="0.45"/>
+          <rect x="205" y="45" width="16" height="125" fill="#D8A83E" opacity="0.3"/>
+          <rect x="379" y="45" width="16" height="125" fill="#D8A83E" opacity="0.3"/>
+          <circle cx="213" cy="38" r="6" fill="#D8A83E" opacity="0.4"/>
+          <circle cx="387" cy="38" r="6" fill="#D8A83E" opacity="0.4"/>
+          <rect x="90" y="95" width="14" height="75" fill="#D8A83E" opacity="0.18"/>
+          <rect x="496" y="95" width="14" height="75" fill="#D8A83E" opacity="0.18"/>
+          <circle cx="97" cy="88" r="5" fill="#D8A83E" opacity="0.24"/>
+          <circle cx="503" cy="88" r="5" fill="#D8A83E" opacity="0.24"/>
+        </svg>
+      </div>
+    </section>
+
+    <section id="prayerPanel" class="prayer-panel"></section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-item">
+      <div>
+        <div class="footer-label-ar">صلاة الجمعة</div>
+        <div class="footer-label-en">JUMU'AH</div>
+      </div>
+      <div class="footer-value" id="jumuahTime">--:--</div>
+    </div>
+    <div class="footer-quote">
+      <div class="footer-quote-ar">وما توفيقي إلا بالله</div>
+      "My success is only by Allah"
+    </div>
+    <div class="footer-item">
+      <div>
+        <div class="footer-label-ar">الشروق</div>
+        <div class="footer-label-en">SUNRISE</div>
+      </div>
+      <div class="footer-value" id="sunriseTime">--:--</div>
+    </div>
+  </footer>
+</div>
+
+<button class="gear" id="gearBtn" title="Reconfigure display">⚙</button>
+
+<script>
+(function(){
+  'use strict';
+  const CFG_KEY = 'tv_config';
+  const PRAYERS = [
+    ['fajr',    {en:'Fajr',    ar:'الفجر'}],
+    ['dhuhr',   {en:'Dhuhr',   ar:'الظهر'}],
+    ['asr',     {en:'Asr',     ar:'العصر'}],
+    ['maghrib', {en:'Maghrib', ar:'المغرب'}],
+    ['isha',    {en:"Isha'",   ar:'العشاء'}]
+  ];   // exactly the 5 prayers; Sunrise lives only in the footer
+
+  // ---------- solar engine (ported 1:1 from the phone app) ----------
+  function fixAngle(a){ return a - 360*Math.floor(a/360); }
+  function fixHour(a){ a %= 24; return a >= 0 ? a : a + 24; }
+  function dsin(d){ return Math.sin(d*Math.PI/180); }
+  function dcos(d){ return Math.cos(d*Math.PI/180); }
+  function dtan(d){ return Math.tan(d*Math.PI/180); }
+  function darcsin(x){ return Math.asin(x)*180/Math.PI; }
+  function darccos(x){ return Math.acos(x)*180/Math.PI; }
+  function darctan2(y,x){ return Math.atan2(y,x)*180/Math.PI; }
+  function darccot(x){ return Math.atan(1/x)*180/Math.PI; }
+  function julianDay(y,m,d){ if(m<=2){ y-=1; m+=12; } const A=Math.floor(y/100); const B=2-A+Math.floor(A/4);
+    return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5; }
+  function sunPosition(jd){ const Dd=jd-2451545.0; const g=fixAngle(357.529+0.98560028*Dd); const q=fixAngle(280.459+0.98564736*Dd);
+    const L=fixAngle(q+1.915*dsin(g)+0.020*dsin(2*g)); const e=23.439-0.00000036*Dd;
+    const decl=darcsin(dsin(e)*dsin(L)); let RA=darctan2(dcos(e)*dsin(L),dcos(L))/15; RA=fixHour(RA);
+    return { decl, eqt: q/15-RA }; }
+  function hourAngle(lat,decl,altDeg){ const cosH=(dsin(altDeg)-dsin(lat)*dsin(decl))/(dcos(lat)*dcos(decl));
+    if(cosH>1||cosH<-1) return null; return darccos(cosH)/15; }
+  function asrAltitude(factor,lat,decl){ return darccot(factor+dtan(Math.abs(lat-decl))); }
+  function tzOffsetForZone(date, timeZone){
+    try{
+      const dtf = new Intl.DateTimeFormat('en-US', { timeZone, hourCycle:'h23',
+        year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      const p = dtf.formatToParts(date).reduce((a,x)=>{ a[x.type]=x.value; return a; },{});
+      const asUTC = Date.UTC(p.year, p.month-1, p.day, p.hour, p.minute, p.second);
+      return (asUTC - date.getTime()) / 3600000;
+    }catch(e){ return -new Date().getTimezoneOffset()/60; }
+  }
+  function computeTimes(date, lat, lng, tz, params){
+    if(!params) return null;
+    const fajrA = params.fajrAngle || 18, ishaA = params.ishaAngle || 18;
+    const ishaInt = params.ishaIntervalMin;             // may be null/undefined
+    const dhuhrOff = params.dhuhrOffsetMin || 0, asrF = params.asrFactor || 1;
+    const asrOff = params.asrOffsetMin || 0, srExtra = params.sunriseExtraMin || 0;
+    const mgExtra = params.maghribExtraMin || 0;
+    const jd0 = julianDay(date.getFullYear(), date.getMonth()+1, date.getDate());
+    const { decl: d0, eqt: e0 } = sunPosition(jd0 + 0.5 - lng/360);
+    const noon = 12 - lng/15 + tz - e0;
+    function at(altDeg, dir){
+      let t = noon + dir*6;
+      for(let i=0;i<3;i++){
+        const jdI = jd0 + (t - tz)/24;
+        const { decl, eqt } = sunPosition(jdI);
+        const ln = 12 - lng/15 + tz - eqt;
+        const h = hourAngle(lat, decl, altDeg);
+        if(h===null) return null;
+        t = ln + dir*h;
+      }
+      return t;
+    }
+    function atAsr(factor){
+      let t = noon + 3.5;
+      for(let i=0;i<3;i++){
+        const jdI = jd0 + (t - tz)/24;
+        const { decl, eqt } = sunPosition(jdI);
+        const ln = 12 - lng/15 + tz - eqt;
+        const aa = asrAltitude(factor, lat, decl);
+        const h = hourAngle(lat, decl, aa);
+        if(h===null) return null;
+        t = ln + h;
+      }
+      return t;
+    }
+    const horizon = 0.833;
+    const fajr = at(-fajrA, -1);
+    const sr = at(-horizon, -1);
+    const sunrise = (sr===null) ? null : sr + srExtra/60;
+    const dhuhr = noon + dhuhrOff/60;
+    let asr = atAsr(asrF); if(asr!==null) asr += asrOff/60;
+    const ss = at(-horizon, 1);
+    const maghrib = (ss===null) ? null : ss + mgExtra/60;
+    let isha;
+    if(ishaInt !== null && ishaInt !== undefined){ isha = (maghrib===null)?null:maghrib + ishaInt/60; }
+    else { isha = at(-ishaA, 1); }
+    return { fajr, sunrise, dhuhr, asr, maghrib, isha };
+  }
+  function toHijri(date){
+    try{
+      const fmt = new Intl.DateTimeFormat('ar-u-ca-islamic-umalqura', { day:'numeric', month:'long', year:'numeric' });
+      return fmt.format(date);
+    }catch(e){ return ''; }
+  }
+  function fmtHM(t){ if(t===null||t===undefined||isNaN(t)) return '--:--';
+    t=((t%24)+24)%24; let h=Math.floor(t); let mi=Math.round((t-h)*60);
+    if(mi===60){ mi=0; h+=1; } h=((h%24)+24)%24;
+    return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0'); }
+  function fmtHMS(sec){ sec=Math.max(0,Math.floor(sec)); const hh=Math.floor(sec/3600), mm=Math.floor((sec%3600)/60), ss=sec%60;
+    return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0'); }
+  function dateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+  // ---------- state ----------
+  let cfg = null;
+  let serverParams = null;          // last /api/params payload
+  let today = null;                 // {dateKey, times, paramsTz}
+  let tomorrow = null;              // {fajr} resolved on rollover
+  let target = { name: null, ar: null, en: null, atHours: null };  // current countdown target
+  let searchedAt = null;
+
+  // ---------- setup flow ----------
+  const $ = (id) => document.getElementById(id);
+  function loadCfg(){ try{ cfg = JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); }catch(e){ cfg = null; } }
+  function saveCfg(){ try{ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }catch(e){} }
+
+  function searchCities(q){
+    const list = $('cityResults');
+    list.innerHTML = '';
+    if(!q || q.trim().length < 2) return;
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 4000);
+    fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&q=' + encodeURIComponent(q.trim()) + '&limit=5',
+          { signal: ctrl.signal, headers: {'Accept-Language':'en'} })
+      .then(r => r.ok ? r.json() : [])
+      .then(items => {
+        clearTimeout(timer);
+        list.innerHTML = '';
+        for(const it of items.slice(0,5)){
+          const li = document.createElement('div');
+          li.className = 'result-item';
+          li.textContent = it.display_name.split(',').slice(0,2).join(',').trim();
+          li.onclick = () => {
+            cfg = cfg || {};
+            cfg.lat = parseFloat(it.lat); cfg.lng = parseFloat(it.lon);
+            cfg.locationLabel = it.display_name.split(',').slice(0,2).join(',').trim();
+            searchedAt = dateKey(new Date());
+            saveCfg();
+            list.innerHTML = '';
+          };
+          list.appendChild(li);
+        }
+      })
+      .catch(() => { clearTimeout(timer); });
+  }
+
+  function showSetup(){
+    $('setupScreen').classList.remove('hidden');
+    $('mainScreen').classList.add('hidden');
+  }
+  function enterMain(){
+    $('setupScreen').classList.add('hidden');
+    $('mainScreen').classList.remove('hidden');
+    applyConfigToHeader();
+    initMain();
+  }
+
+  function applyConfigToHeader(){
+    const name = (cfg.mosqueName || '').trim();
+    $('mosqueNameAr').textContent = name || 'أوقات الصلاة';
+    $('mosqueNameEn').textContent = name || 'Prayer Times';
+    $('locationLabel').textContent = cfg.locationLabel || (cfg.lat + ', ' + cfg.lng);
+  }
+
+  // ---------- data ----------
+  function relativeVerifiedTime(iso){
+    try{
+      const t = new Date(iso);
+      if(isNaN(t.getTime())) return null;
+      const s = (Date.now() - t.getTime()) / 1000;
+      if(s < 0) return 'just now';
+      if(s < 90) return 'just now';
+      if(s < 3600) return Math.max(1, Math.round(s/60)) + ' min ago';
+      if(s < 86400) return 'today';
+      const d = Math.floor(s / 86400);
+      return d === 1 ? '1 day ago' : d + ' days ago';
+    }catch(e){ return null; }
+  }
+  function tierStateFromParams(p){
+    // same interpretation as the phone app's accuracy badge
+    if(!p) return 'offline';
+    if(p.source === 'tier2') return 'verified';
+    if(p.source === 'exact') return 'exact';
+    if(p.verificationQueued) return 'queued';
+    return 'estimated';
+  }
+  let curTierState = 'checking';
+  function setIndicator(state){
+    curTierState = state;
+    const t = document.getElementById('accText');
+    if(!t) return;
+    // Capitalized, descriptive labels matching the phone app's accuracy badge terminology;
+    // use full verified-at info for tier2 (same detail the phone surfaces), not a collapsed binary.
+    let label = state;
+    let detail = '';
+    if(state === 'verified' && serverParams && serverParams.verifiedAt){
+      try{
+        const rel = relativeVerifiedTime(serverParams.verifiedAt);
+        if(rel) detail = ' — ' + rel;
+      }catch(e){}
+    }
+    if(state === 'verified') label = 'Verified';
+    else if(state === 'exact') label = 'Exact';
+    else if(state === 'queued') label = 'Queued';
+    else if(state === 'estimated') label = 'Estimated';
+    else if(state === 'offline') label = 'Offline';
+    else if(state === 'checking') label = 'Checking…';
+    t.textContent = label + detail;
+  }
+  function checkQueuedTier(){
+    // mirror the phone: only poll while a verification is pending
+    if(curTierState !== 'queued' || !cfg || !today) return;
+    fetchParams(cfg.lat, cfg.lng, today.dateKey).then(p => {
+      if(!p){ setIndicator('offline'); return; }
+      const st = tierStateFromParams(p);
+      if(st === 'verified' || st === 'exact' || st === 'queued'){
+        serverParams = p;
+        setIndicator(st);
+        if(st !== 'queued'){
+          today.times = resolveDay(new Date());
+          if(today.times) paintAll(new Date());
+        }
+      }
+    }).catch(()=>{});
+  }
+  function fetchParams(lat, lng, dateISO){
+    return fetch('/api/params?lat=' + lat + '&lng=' + lng + (dateISO ? '&date=' + dateISO : ''), { cache:'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null);
+  }
+  function resolveDay(date){
+    // returns {times} for a date — exact rows served directly, else computed from saved params
+    const dk = dateKey(date);
+    if(serverParams && serverParams.source === 'exact' && serverParams.date === dk){
+      const t = serverParams.times || {};
+      const hh = (k) => { const v = t[k]; if(!v) return null; const p = v.split(':'); return parseInt(p[0],10) + parseInt(p[1],10)/60.0; };
+      return { fajr: hh('fajr'), sunrise: hh('sunrise'), dhuhr: hh('dhuhr'), asr: hh('asr'), maghrib: hh('maghrib'), isha: hh('isha') };
+    }
+    if(!serverParams || !serverParams.params) return null;
+    const tz = serverParams.timezone ? tzOffsetForZone(date, serverParams.timezone) : -new Date().getTimezoneOffset()/60;
+    return computeTimes(date, cfg.lat, cfg.lng, tz, serverParams.params);
+  }
+
+  // ------- timezone-correct time computation (same approach as phone app: server timezone fed via Intl) -------
+  function zoneNowParts(now, zone){
+    if(!zone) return { hours: now.getHours(), minutes: now.getMinutes(), seconds: now.getSeconds(), day: now.getDay() };
+    try{
+      const fmt = new Intl.DateTimeFormat('en-US', { timeZone: zone, hourCycle:'h23',
+        hour:'2-digit', minute:'2-digit', second:'2-digit', weekday:'short' });
+      const parts = fmt.formatToParts(now).reduce((a,p)=>{a[p.type]=p.value; return a;},{});
+      const dayMap = {Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+      return { hours:+parts.hour, minutes:+parts.minute, seconds:+parts.second, day:dayMap[parts.weekday] };
+    }catch(e){
+      return { hours: now.getHours(), minutes: now.getMinutes(), seconds: now.getSeconds(), day: now.getDay() };
+    }
+  }
+  // ------- rendering -------
+  function renderDays(){
+    const now = new Date();
+    const dk = dateKey(now);
+    if(today && today.dateKey !== dk){
+      today = null; tomorrow = null;                    // new day: drop yesterday's state
+      serverParams = null;
+    }
+    if(!today && cfg){
+      today = { dateKey: dk, times: null, needsTomorrow: false };
+      setIndicator('checking');
+      fetchParams(cfg.lat, cfg.lng, dk).then(p => {
+        if(p){ serverParams = p; setIndicator(tierStateFromParams(p)); }
+        else { setIndicator('offline'); }
+        today.times = resolveDay(now);
+        if(today.times) paintAll(now);
+      }).catch(()=>{ setIndicator('offline'); if(serverParams) today.times = resolveDay(now); });
+    }
+  }
+  // ------- painting -------
+  function paintAll(now){
+    // Each painter computes zone-correct data internally (self-sufficient pattern)
+    paintClock(now);
+    paintCurrent(now);
+    paintNext(now);
+  }
+
+  function prayerList(times){
+    const out = [];
+    for(const [key, names] of PRAYERS){
+      if(times && times[key] !== null && times[key] !== undefined) out.push([key, names, times[key]]);
+    }
+    return out;
+  }
+  function paintPanel(times, activeKey){
+    const panel = $('prayerPanel');
+    let html = '';
+    for(const [key, names, t] of prayerList(times)){
+      const active = (key === activeKey) ? ' active' : '';
+      const badge = (key === activeKey) ? '<div class="next-badge">NEXT</div>' : '';
+      html += '<div class="prow' + active + '">'
+        + '<div class="ptime">' + fmtHM(t) + '</div>'
+        + '<div class="pdivider"></div>'
+        + '<div class="pname"><div class="pname-ar">' + names.ar + '</div><div class="pname-en">' + names.en.toUpperCase() + '</div></div>'
+        + badge + '</div>';
+    }
+    panel.innerHTML = html;
+  }
+  function paintCurrent(now){
+    if(!today || !today.times) return;
+    const ts = today.times;
+    const zone = (serverParams && serverParams.timezone) ? serverParams.timezone : undefined;
+    const zp = zoneNowParts(now, zone);
+    const nowH = zp.hours + zp.minutes/60 + zp.seconds/3600;
+    let activeKey = null, next = null, needsTomorrow = false;
+    for(const [key, names, t] of prayerList(ts)){
+      if(t !== null && nowH < t){ next = [key, names, t]; activeKey = key; break; }
+    }
+    if(next){
+      target = { name:next[0], ar:next[1].ar, en:next[1].en, atHours: next[2] };
+    } else if(tomorrow && tomorrow.fajr !== null){
+      // rollover: after Isha -> tomorrow's ACTUAL Fajr
+      target = { name:'fajr', ar:PRAYERS[0][1].ar, en:PRAYERS[0][1].en, atHours: tomorrow.fajr + 24 };
+      activeKey = null;
+    } else {
+      needsTomorrow = true;   // past Isha, tomorrow not resolved yet
+    }
+    paintPanel(ts, activeKey);
+    // footer: sunrise + jumu'ah (Fridays -> Dhuhr; uses zone-local day, not device day)
+    $('sunriseTime').textContent = fmtHM(ts.sunrise);
+    $('jumuahTime').textContent = (zp.day === 5) ? fmtHM(ts.dhuhr) : '— —';
+  }
+  function paintClock(now){
+    // Use configured location's timezone from server response, not device's own clock — same fix the phone app uses (tzOffsetForZone fed by server timezone)
+    const zone = (serverParams && serverParams.timezone) ? serverParams.timezone : undefined;
+    if(zone){
+      try{
+        const fmt = new Intl.DateTimeFormat('en-US', { timeZone: zone, hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const parts = fmt.formatToParts(now);
+        const hh = parts.find(p => p.type === 'hour').value;
+        const mm = parts.find(p => p.type === 'minute').value;
+        const ss = parts.find(p => p.type === 'second').value;
+        $('clock').textContent = hh + ':' + mm + ':' + ss;
+      }catch(e){
+        // fallback to device local if timezone formatting fails
+        $('clock').textContent = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+      }
+    } else {
+      $('clock').textContent = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+    }
+    // Date text also uses the configured timezone, matching the phone app's behavior
+    try{
+      if(serverParams && serverParams.timezone){
+        $('dateAr').textContent = new Intl.DateTimeFormat('ar', { timeZone: serverParams.timezone, weekday: 'long', day: 'numeric', month: 'long' }).format(now);
+        $('dateEn').textContent = new Intl.DateTimeFormat('en-US', { timeZone: serverParams.timezone, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now);
+      } else {
+        $('dateAr').textContent = now.toLocaleDateString('ar', { weekday:'long', day:'numeric', month:'long' });
+        $('dateEn').textContent = now.toLocaleDateString('en-US', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      }
+    }catch(e){
+      $('dateAr').textContent = now.toLocaleDateString('ar', { weekday:'long', day:'numeric', month:'long' });
+      $('dateEn').textContent = now.toLocaleDateString('en-US', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    }
+    $('hijriDate').textContent = toHijri(now);
+  }
+  function paintNext(now){
+    const zone = (serverParams && serverParams.timezone) ? serverParams.timezone : undefined;
+    const zp = zoneNowParts(now, zone);
+    const nm = $('nextArabic').textContent = target.ar || '—';
+    $('nextEnglish').textContent = target.en || '—';
+    const secs = target.atHours !== null ? Math.max(0, Math.round((target.atHours - (zp.hours + zp.minutes/60 + zp.seconds/3600)) * 3600)) : 0;
+    $('countdown').textContent = fmtHMS(secs);
+  }
+
+  // ---------- burn-in protection ----------
+  function nudge(){
+    const dx = Math.round((Math.random()*2-1)*3);
+    const dy = Math.round((Math.random()*2-1)*3);
+    $('mainScreen').style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+  }
+
+  // ---------- main ----------
+  function initMain(){
+    renderDays();
+    paintClock(new Date());
+    const tick = () => {
+      const now = new Date();
+      paintClock(now);
+      renderDays();
+      if(today && today.times){
+        paintCurrent(now);
+        paintNext(now);
+        // rollover fetch: past Isha with no tomorrow state -> resolve tomorrow's ACTUAL Fajr once
+        if(today.needsTomorrow && !tomorrow){
+          today.needsTomorrow = false;
+          const tom = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+          fetchParams(cfg.lat, cfg.lng, dateKey(tom)).then(p => {
+            const prev = serverParams;
+            if(p) serverParams = p;
+            const t = resolveDay(tom);
+            if(prev) serverParams = prev;
+            if(t && t.fajr !== null){
+              tomorrow = { fajr: t.fajr };
+              const n2 = new Date();
+              paintCurrent(n2);
+              paintNext(n2);
+            }
+          }).catch(()=>{});
+        }
+      }
+    };
+    tick();
+    setInterval(tick, 1000);
+    setInterval(checkQueuedTier, 60000);   // pending-verification poll (phone-app parity)
+    setInterval(nudge, 300000);           // burn-in shift every 5 minutes
+    setTimeout(() => $('gearBtn').classList.remove('hidden'), 0);
+  }
+
+  // ---------- boot ----------
+  loadCfg();
+  if(cfg && cfg.lat) setIndicator('checking');
+  if(!cfg || !cfg.lat){
+    // kiosk provisioning: ?cfg=lat,lng,label seeds the display without touching storage
+    try{
+      const q = new URLSearchParams(location.search).get('cfg');
+      if(q){
+        const parts = q.split(',');
+        if(parts.length >= 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1]))){
+          cfg = { lat: parseFloat(parts[0]), lng: parseFloat(parts[1]),
+                  locationLabel: (parts.slice(2).join(',') || (parts[0] + ', ' + parts[1])) };
+        }
+      }
+    }catch(e){}
+  }
+  $('gearBtn').classList.add('hidden');
+  if(cfg && cfg.lat && cfg.lng){
+    enterMain();
+  } else {
+    showSetup();
+  }
+
+  $('citySearchInput').addEventListener('input', () => searchCities($('citySearchInput').value));
+  $('setupSaveBtn').addEventListener('click', () => {
+    const m = $('mosqueNameInput').value.trim();
+    if(!cfg || cfg.lat === undefined){ alert('Pick a city from the search results first.'); return; }
+    if(m) cfg.mosqueName = m; else delete cfg.mosqueName;
+    saveCfg();
+    enterMain();
+  });
+  $('gearBtn').addEventListener('click', () => {
+    try{ localStorage.removeItem(CFG_KEY); }catch(e){}
+    cfg = null; today = null; tomorrow = null; serverParams = null;
+    showSetup();
+  });
+
+  // debug/ops probe (verification + unattended diagnostics)
+  window.__tv = { needsTomorrowFlag: () => today ? today.needsTomorrow : null, computeTimes, resolveDay: () => today ? today.times : null,
+                  nowTarget: () => ({ ar: target.ar, en: target.en, atHours: target.atHours }),
+
+                  nudgeNow: nudge };
+})();
+</script>
+</body>
+</html>

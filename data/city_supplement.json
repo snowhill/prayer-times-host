@@ -1,0 +1,119 @@
+[
+ {
+  "city_name": "Khor Fakkan",
+  "city_id": "50145",
+  "iso2": "AE",
+  "lat": 25.33132,
+  "lon": 56.3419914,
+  "elevation_m": 34.0,
+  "timezone": "Asia/Dubai"
+ },
+ {
+  "city_name": "Al Ain",
+  "city_id": "50141",
+  "iso2": "AE",
+  "lat": 24.19167,
+  "lon": 55.7605591,
+  "elevation_m": 294.0,
+  "timezone": "Asia/Dubai"
+ },
+ {
+  "city_name": "Fujairah",
+  "city_id": "50158",
+  "iso2": "AE",
+  "lat": 25.1229295,
+  "lon": 56.3431282,
+  "elevation_m": 4.0,
+  "timezone": "Asia/Dubai"
+ },
+ {
+  "city_name": "Sharjah",
+  "city_id": "50138",
+  "iso2": "AE",
+  "lat": 25.33737,
+  "lon": 55.4120598,
+  "elevation_m": 5.0,
+  "timezone": "Asia/Dubai"
+ },
+ {
+  "city_name": "Ras Al Khaimah",
+  "city_id": "50132",
+  "iso2": "AE",
+  "lat": 25.7935,
+  "lon": 55.9440002,
+  "elevation_m": 0.0,
+  "timezone": "Asia/Dubai"
+ },
+ {
+  "city_name": "Ajman",
+  "city_id": "50157",
+  "iso2": "AE",
+  "lat": 25.4028273,
+  "lon": 55.4855309,
+  "elevation_m": 4.0,
+  "timezone": "Asia/Dubai"
+ },
+ {
+  "city_name": "Abu Dhabi",
+  "city_id": "50139",
+  "iso2": "AE",
+  "lat": 24.45118,
+  "lon": 54.3969612,
+  "elevation_m": 5.0,
+  "timezone": "Asia/Dubai"
+ },
+ {
+  "city_name": "Dubai",
+  "city_id": "50137",
+  "iso2": "AE",
+  "lat": 25.07725,
+  "lon": 55.309269,
+  "elevation_m": 30.0,
+  "timezone": "Asia/Dubai"
+ },
+ {
+  "city_name": "London",
+  "city_id": "47782",
+  "iso2": "GB",
+  "lat": 51.50853,
+  "lon": -0.12574,
+  "elevation_m": 33.0,
+  "timezone": "Europe/London"
+ },
+ {
+  "city_name": "New York City",
+  "city_id": "48555",
+  "iso2": "US",
+  "lat": 40.71427,
+  "lon": -74.0059662,
+  "elevation_m": 4.0,
+  "timezone": "America/New_York"
+ },
+ {
+  "city_name": "Karachi",
+  "city_id": "37738",
+  "iso2": "PK",
+  "lat": 24.8608,
+  "lon": 67.0103989,
+  "elevation_m": 13.0,
+  "timezone": "Asia/Karachi"
+ },
+ {
+  "city_name": "Islamabad",
+  "city_id": "37743",
+  "iso2": "PK",
+  "lat": 33.72148,
+  "lon": 73.0432892,
+  "elevation_m": 584.5,
+  "timezone": "Asia/Karachi"
+ },
+ {
+  "city_name": "Paris",
+  "city_id": "47444",
+  "iso2": "FR",
+  "lat": 48.08964,
+  "lon": 39.6524315,
+  "elevation_m": 239.5,
+  "timezone": "Europe/Kiev"
+ }
+]
