@@ -14,17 +14,11 @@ evidence-khor-fakkan-*.png
 load_test*.py
 load_test_extra.py
 evidence-*.png
-evidence-check-*.png
-evidence-timezone-*.png
-evidence-khor-fakkan-*.png
 evidence-phone-*.png
 hermes-tv-accuracy-indicator*.zip
-load_test*.py
-load_test_extra.py
 watchdog.py
 patch_light.py
 make_icons.py
-watchdog.pid
 watchdog.log
 exact.log
 push.log
